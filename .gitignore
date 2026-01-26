@@ -1,0 +1,31 @@
+# --- Dependencies ---
+node_modules/
+jspm_packages/
+package-lock.json
+yarn.lock
+
+# --- OS / IDE Junk ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.log
+
+# --- Build / Dist ---
+dist/
+build/
+out/
+.wasmer/
+
+# --- Environment / Secrets ---
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# --- Browser/Local Storage Emulation ---
+# If you use local tools that dump state
+.cache/
+.tmp/
