@@ -1,0 +1,13 @@
+# 🚀 TerminalSafari
+A persistent, networked Linux-like terminal that runs entirely in Safari (iOS & macOS).
+
+## Features
+- **WebAssembly Powered**: Runs a real Bash shell via Wasmer.
+- **Persistent Storage**: Saves your `/home` directory to the browser's IndexedDB.
+- **Mobile Optimized**: Custom touch-bar for TAB, CTRL, and ESC.
+- **Network Ready**: Supports `curl` and network requests via WASIX.
+
+## Quick Start
+1. Clone the repo: `git clone https://github.com/yourusername/TerminalSafari.git`
+2. Open `index.html` in Safari.
+3. (iOS) Tap Share -> **Add to Home Screen** for the best experience.
