@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>TerminalSafari Pro</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css" />
+    <style>
+        :root { --bg: #000; --bar: #1a1a1a; --text: #0f0; --btn: #333; }
+        body, html { margin: 0; padding: 0; height: 100%; background: var(--bg); color: var(--text); display: flex; flex-direction: column; overflow: hidden; font-family: 'Menlo', 'Monaco', monospace; }
+        
+        #terminal { flex-grow: 1; width: 100%; padding: 10px; box-sizing: border-box; }
+
+        /* Mobile Touch Bar Styling */
+        #touch-bar { 
+            display: flex; background: var(--bar); padding: 10px; gap: 8px; 
+            border-top: 1px solid #333; overflow-x: auto; -webkit-overflow-scrolling: touch;
+            padding-bottom: env(safe-area-inset-bottom); /* iOS Notch Support */
+        }
+        .t-btn { 
+            background: var(--btn); color: #fff; border: none; padding: 12px 20px; 
+            border-radius: 8px; font-family: monospace; font-weight: bold; 
+            flex-shrink: 0; cursor: pointer; -webkit-tap-highlight-color: transparent;
+        }
+        .t-btn:active { background: #555; }
+    </style>
+</head>
+<body>
+
+    <div id="terminal"></div>
+
+    <div id="touch-bar">
+        <button class="t-btn" onclick="sendKey('\t')">TAB</button>
+        <button class="t-btn" onclick="sendKey('\x03')">CTRL+C</button>
+        <button class="t-btn" onclick="sendKey('\x1b')">ESC</button>
+        <button class="t-btn" onclick="sendKey('\x1b[A')">↑</button>
+        <button class="t-btn" onclick="sendKey('\x1b[B')">↓</button>
+        <button class="t-btn" onclick="sendKey('/')">/</button>
+        <button class="t-btn" onclick="sendKey('-')">-</button>
+        <button class="t-btn" onclick="sendKey('ls\n')">LS</button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js"></script>
+    <script type="module">
+        import { Wasmer, init, Directory } from 'https://cdn.jsdelivr.net/npm/@wasmer/sdk@0.7.0/dist/index.mjs';
+
+        let stdinWriter;
+        const encoder = new TextEncoder();
+
+        // Global function to allow HTML buttons to interact with the WASM process
+        window.sendKey = (key) => {
+            if (stdinWriter) stdinWriter.write(encoder.encode(key));
+        };
+
+        async function start() {
+            // 1. Initialize WASM kernel
+            await init();
+
+            // 2. Setup Xterm UI
+            const term = new window.Terminal({
+                cursorBlink: true,
+                theme: { background: '#000', foreground: '#0f0' },
+                fontSize: 14,
+                allowProposedApi: true
+            });
+            term.open(document.getElementById('terminal'));
+            term.writeln('Welcome to TerminalSafari...');
+
+            // 3. Setup Persistence (IndexedDB Bridge)
+            const persistentDir = new Directory();
+            const saved = localStorage.getItem('term_fs_v1');
+            if (saved) {
+                const fs = JSON.parse(saved);
+                for (const [name, content] of Object.entries(fs)) {
+                    await persistentDir.writeFile(name, new Uint8Array(content));
+                }
+            }
+
+            // 4. Run Bash with Network & Persistence
+            const pkg = await Wasmer.fromRegistry("sharrattj/bash");
+            const instance = await pkg.entrypoint.run({
+                mount: { "/home": persistentDir },
+                network: true 
+            });
+
+            stdinWriter = instance.stdin.getWriter();
+            instance.stdout.pipeTo(new WritableStream({
+                write(chunk) { term.write(chunk); }
+            }));
+
+            // Connect UI input to Bash
+            term.onData(data => stdinWriter.write(encoder.encode(data)));
+
+            // 5. Auto-Save Files (Every 5 seconds)
+            setInterval(async () => {
+                const entries = await persistentDir.readDir("/");
+                const snapshot = {};
+                for (const entry of entries) {
+                    if (entry.type === 'file') {
+                        const content = await persistentDir.readFile(entry.name);
+                        snapshot[entry.name] = Array.from(content);
+                    }
+                }
+                localStorage.setItem('term_fs_v1', JSON.stringify(snapshot));
+            }, 5000);
+        }
+
+        start();
+    </script>
+</body>
+</html>
