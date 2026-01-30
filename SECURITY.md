@@ -14,7 +14,7 @@ We actively provide security updates for the following versions:
 If you discover a potential security flaw in TerminalSafari (especially regarding Wasmer integration or data persistence escapes), please report it via one of the following methods:
 
 1. **GitHub Private Reporting**: Use the "Report a vulnerability" button under the **Security** tab of this repository.
-2. **Email**: [Your Email Address]
+2. **Email**: [serobcholakyan116@gmail.com]
 
 Please include:
 - A description of the vulnerability.
