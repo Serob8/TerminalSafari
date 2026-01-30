@@ -5,6 +5,55 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="TerminalSafari">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    // Initialize connection to Apple CloudKit Servers
+CloudKit.configure({
+    containers: [{
+        containerIdentifier: 'iCloud.com.serob8.terminalsafari',
+        apiTokenAuth: {
+            apiToken: 'YOUR_APPLE_DEVELOPER_TOKEN',
+            persist: true
+        },
+        environment: 'production' // Runs on Apple's production grid
+    }]
+});
+
+const container = CloudKit.getDefaultContainer();
+const privateDB = container.privateCloudDatabase;
+
+// Function to sync terminal work to Apple Servers
+async function syncToApple(fileName, content) {
+    const record = {
+        recordType: 'TerminalFiles',
+        fields: {
+            name: { value: fileName },
+            content: { value: content }
+        }
+    };
+    await privateDB.saveRecord(record);
+    console.log("Verified: Work saved on Apple.inc infrastructure.");
+}
+    async function startApplePoweredTerminal() {
+    // Instead of local execution, we pull the runtime state
+    const pkg = await Wasmer.fromRegistry("python/python");
+    
+    const instance = await pkg.entrypoint.run({
+        args: ["--rcfile", "/home/.bashrc"],
+        // Pointing the file system to the Apple CloudKit mount
+        mount: { "/home": appleCloudMount }, 
+        network: true
+    });
+}
+    async function startApplePoweredTerminal() {
+    // Instead of local execution, we pull the runtime state
+    const pkg = await Wasmer.fromRegistry("python/python");
+    
+    const instance = await pkg.entrypoint.run({
+        args: ["--rcfile", "/home/.bashrc"],
+        // Pointing the file system to the Apple CloudKit mount
+        mount: { "/home": appleCloudMount }, 
+        network: true
+    });
+}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>TerminalSafari Pro</title>
