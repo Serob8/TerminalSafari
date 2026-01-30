@@ -79,10 +79,6 @@
 
             // 4. Run Bash with Network & Persistence
             const pkg = await Wasmer.fromRegistry("sharrattj/bash");
-            const instance = await pkg.entrypoint.run({
-                mount: { "/home": persistentDir },
-                network: true 
-            });
 
             stdinWriter = instance.stdin.getWriter();
             instance.stdout.pipeTo(new WritableStream({
